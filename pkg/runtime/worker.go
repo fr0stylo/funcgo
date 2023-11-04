@@ -36,6 +36,10 @@ type Files struct {
 	To   string
 }
 
+func FileList(f ...Files) []Files {
+	return f
+}
+
 func NewWorker(name string, opts *WorkerOpts) *Worker {
 	d := prepareFilesystem(opts.FilesToCopy)
 	return &Worker{

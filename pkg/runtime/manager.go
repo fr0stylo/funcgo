@@ -4,6 +4,10 @@ import "log"
 
 type ManagerOpts struct {
 	MaxConcurrency int
+	MainExec       string
+	Files          []Files
+	WorkerOptions  *WorkerOpts
+	RootFS         string
 }
 
 type Manager struct {
@@ -13,9 +17,7 @@ type Manager struct {
 
 func NewManager(opts *ManagerOpts) *Manager {
 	return &Manager{
-		pool: NewWorkerPool(&WorkerPoolOpts{WorkerTemplate: &WorkerOpts{InitPath: "/etc/wrapper.sh", FilesToCopy: []Files{
-			{From: "./wrapper.sh", To: "/etc/wrapper.sh"},
-		}}}),
+		pool:           NewWorkerPool(&WorkerPoolOpts{WorkerTemplate: &WorkerOpts{InitPath: opts.MainExec, FilesToCopy: opts.Files}}),
 		maxConcurrency: opts.MaxConcurrency,
 	}
 }

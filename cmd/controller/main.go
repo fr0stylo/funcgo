@@ -9,22 +9,27 @@ import (
 	"github.com/fr0stylo/funcgo/pkg/runtime"
 )
 
-
 func main() {
 	log.Print("Running", os.Args)
 	c := ""
 	if len(os.Args) > 1 {
 		c = os.Args[1]
 	}
-	mngr := runtime.NewManager(&runtime.ManagerOpts{
-		// MaxConcurrency: 2,
-		MaxConcurrency: 10,
-	})
 
 	switch c {
 	case "container":
 		containerInit()
 	default:
+		mngr := runtime.NewManager(&runtime.ManagerOpts{
+			// MaxConcurrency: 2,
+			MaxConcurrency: 10,
+			MainExec:       "/etc/wrapper.sh",
+			RootFS:         "./fs",
+			Files: runtime.FileList(
+				runtime.Files{From: "./wrapper.sh", To: "/etc/wrapper.sh"},
+			),
+		})
+
 		for {
 			reader := bufio.NewReader(os.Stdin)
 			fmt.Print("Hit me\n")
