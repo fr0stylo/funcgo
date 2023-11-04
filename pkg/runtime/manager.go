@@ -13,7 +13,9 @@ type Manager struct {
 
 func NewManager(opts *ManagerOpts) *Manager {
 	return &Manager{
-		pool:           NewWorkerPool(&WorkerPoolOpts{WorkerTemplate: &WorkerOpts{InitPath: "./wrapper.sh"}}),
+		pool: NewWorkerPool(&WorkerPoolOpts{WorkerTemplate: &WorkerOpts{InitPath: "/etc/wrapper.sh", FilesToCopy: []Files{
+			{From: "./wrapper.sh", To: "/etc/wrapper.sh"},
+		}}}),
 		maxConcurrency: opts.MaxConcurrency,
 	}
 }

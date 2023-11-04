@@ -2,10 +2,12 @@ package runtime
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"sync"
+	"syscall"
 	"time"
 
 	"golang.org/x/sys/unix"
@@ -25,12 +27,17 @@ type Worker struct {
 }
 
 type WorkerOpts struct {
-	InitPath string
+	InitPath    string
+	FilesToCopy []Files
+}
+
+type Files struct {
+	From string
+	To   string
 }
 
 func NewWorker(name string, opts *WorkerOpts) *Worker {
-	d := prepareFilesystem(opts.InitPath)
-
+	d := prepareFilesystem(opts.FilesToCopy)
 	return &Worker{
 		name:     name,
 		busy:     false,
@@ -42,12 +49,20 @@ func NewWorker(name string, opts *WorkerOpts) *Worker {
 	}
 }
 
+var (
+	defaultEnv = []string{
+		"HOME=/root",
+		"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+		"TERM=xterm",
+	}
+)
+
 func (r *Worker) Start(c context.Context) error {
 	ctx, cancel := context.WithCancel(c)
 	r.cancel = cancel
 
 	cmd := exec.CommandContext(ctx, "/proc/self/exe", "container", r.tmpDir+"/fs")
-	cmd.Env = []string{"FUNC_INIT=" + r.initPath, "HOSTNAME=" + r.hostname}
+	cmd.Env = append(defaultEnv, []string{"FUNC_INIT=" + r.initPath, "HOSTNAME=" + r.hostname}...)
 
 	cmd.SysProcAttr = &unix.SysProcAttr{
 		Cloneflags: unix.CLONE_NEWUTS |
@@ -57,6 +72,20 @@ func (r *Worker) Start(c context.Context) error {
 			unix.CLONE_NEWNS,
 		// unix.CLONE_NEWUSER |
 		Unshareflags: unix.CLONE_NEWNS,
+		UidMappings: []syscall.SysProcIDMap{
+			{
+				ContainerID: 0,
+				HostID:      os.Geteuid(),
+				Size:        1,
+			},
+		},
+		GidMappings: []syscall.SysProcIDMap{
+			{
+				ContainerID: 0,
+				HostID:      os.Getegid(),
+				Size:        1,
+			},
+		},
 	}
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
@@ -75,18 +104,21 @@ func (w *Worker) Stop() {
 	w.cancel()
 }
 
-func prepareFilesystem(initPath string) string {
+func prepareFilesystem(fs []Files) string {
 	d, err := os.MkdirTemp("", "container-")
 	if err != nil {
 		log.Fatal("tmpdir ", err)
 	}
+	log.Print(d)
 
 	if err := execc("cp", "-r", "./fs", d); err != nil {
 		log.Fatal("cp: ", err)
 	}
 
-	if err := execc("cp", "-r", initPath, d+"/fs/"); err != nil {
-		log.Fatal("cp wrapper: ", err)
+	for _, v := range fs {
+		if err := execc("cp", "-r", v.From, fmt.Sprintf("%s/fs%s", d, v.To)); err != nil {
+			log.Fatal("cp wrapper: ", err)
+		}
 	}
 
 	return d
