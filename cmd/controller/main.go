@@ -9,6 +9,7 @@ import (
 	"github.com/fr0stylo/funcgo/pkg/runtime"
 )
 
+
 func main() {
 	log.Print("Running", os.Args)
 	c := ""
@@ -34,7 +35,6 @@ func main() {
 				break
 			}
 
-			
 			go mngr.Execute()
 		}
 	}

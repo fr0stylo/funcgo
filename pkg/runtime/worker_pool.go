@@ -43,7 +43,7 @@ func (r *WorkerPool) deregister() {
 	defer t.Stop()
 	for range t.C {
 		for n, w := range r.workers {
-			if w.SinceLastExecution() > 10*time.Second && !w.IsBusy() {
+			if w.SinceLastExecution() > 200*time.Second && !w.IsBusy() {
 				w.Stop()
 				r.remove(n)
 			}

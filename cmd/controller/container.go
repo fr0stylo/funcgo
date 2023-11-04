@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"syscall"
+
+	"github.com/fr0stylo/funcgo/pkg/runtime"
 )
 
 func containerInit() {
@@ -20,14 +22,17 @@ func containerInit() {
 	fmt.Fprintf(os.Stdout, "%s\n", os.Args[2])
 
 	must("hostname: ", syscall.Sethostname([]byte("inside-container")))
-
+	
 	cg()
-
+	
 	must("chdir: ", syscall.Chroot(os.Args[2]))
 	must("chdir: ", syscall.Chdir("/"))
 	must("proc: ", syscall.Mount("proc", "proc", "proc", 0, ""))
 	defer syscall.Unmount("/proc", 0)
 	// ctx, _ := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	
+	must("Setup net: ", runtime.SetupNet())
+
 	ctx := context.Background()
 
 	cmd := exec.CommandContext(ctx, initPath)

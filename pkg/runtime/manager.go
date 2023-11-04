@@ -38,3 +38,9 @@ func (r *Manager) Execute() {
 	// 2.5 Wait till worker available
 	// 3. Send message to worker
 }
+
+func must(name string, err error) {
+	if err != nil {
+		log.Fatal(name, err)
+	}
+}
