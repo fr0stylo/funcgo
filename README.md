@@ -2,7 +2,7 @@
  
 ## Description
 
-This is experimental repository, implementing on demand functions based on unix rootless container.
+This is experimental repository, implementing on demand functions based on unix rootless container. Fully implemented in GO, works only on unix based systems as it is using unix syscalls and unix namespaces
 
 ## Running containers 
 
