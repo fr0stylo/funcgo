@@ -32,7 +32,6 @@ type Handler[T Request] func(context.Context, *zap.SugaredLogger, *Request) erro
 func handle[T Request](h Handler[T]) {
 	zz, _ := zap.NewProduction()
 	z := zz.Sugar()
-	z.Info("Logging")
 
 	h2s := &http2.Server{}
 

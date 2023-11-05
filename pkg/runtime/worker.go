@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -110,6 +111,8 @@ func (r *Worker) Start(c context.Context) error {
 	putIface(cmd.Process.Pid)
 
 	go cmd.Wait()
+
+	raw_connect(r.ip.IP.String(), "9999")
 	r.pid = cmd.Process.Pid
 	r.p = cmd.Process
 	return nil
@@ -166,7 +169,7 @@ func (r *Worker) Execute() {
 	defer log.Printf("[%s] exec: end", r.name)
 	log.Print()
 
-	b, _:=json.Marshal(map[string]string{"Url": "sta", "Body": "okok"})
+	b, _ := json.Marshal(map[string]string{"Url": "sta", "Body": "okok"})
 
 	log.Print(http.Post(fmt.Sprintf("http://%s:9999", r.ip.IP.String()), "application/json", bytes.NewBuffer(b)))
 	r.lastExec = time.Now()
@@ -183,4 +186,19 @@ func execc(cmd string, args ...string) error {
 	c.Stdout = os.Stdout
 
 	return c.Run()
+}
+
+func raw_connect(host string, port string) {
+	for {
+		timeout := time.Second
+		conn, err := net.DialTimeout("tcp", net.JoinHostPort(host, port), timeout)
+		if err != nil {
+			fmt.Println("Connecting error:", err)
+		}
+		if conn != nil {
+			defer conn.Close()
+			fmt.Println("ready", net.JoinHostPort(host, port))
+			return
+		}
+	}
 }
