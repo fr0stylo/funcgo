@@ -9,6 +9,9 @@ This is experimental repository, implementing on demand functions based on unix 
 1. In order to prep environment run `make build`, this will require `root` as this is required in order to manage network interfaces.
 1. run `./bin/controller` 
 
+## Unet
+ Unet is app from https://github.com/LK4D4/unc/blob/master/unet/main.go which is used to create and maintains links between container namespaces. This applications requires elevated access to run, that's why make uses `sudo`
+
 ## State
 
 - [x] Container from scratch
