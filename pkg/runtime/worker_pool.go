@@ -77,7 +77,7 @@ func (r *WorkerPool) Push() Runnable {
 	r.m.Lock()
 	name := fmt.Sprintf("%s-%s", utils.RandomString(8), utils.RandomString(8))
 
-	w := NewWorker(name, r.template)
+	w := NewWorker(name, defaultIPManager.Acquire(), r.template)
 	w.Start(context.Background())
 
 	r.workers[name] = w

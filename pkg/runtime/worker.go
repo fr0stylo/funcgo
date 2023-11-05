@@ -1,15 +1,19 @@
 package runtime
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"sync"
 	"syscall"
 	"time"
 
+	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
 )
 
@@ -24,6 +28,7 @@ type Worker struct {
 	p        *os.Process
 	hostname string
 	cancel   context.CancelFunc
+	ip       *netlink.Addr
 }
 
 type WorkerOpts struct {
@@ -40,11 +45,12 @@ func FileList(f ...Files) []Files {
 	return f
 }
 
-func NewWorker(name string, opts *WorkerOpts) *Worker {
+func NewWorker(name string, ip *netlink.Addr, opts *WorkerOpts) *Worker {
 	d := prepareFilesystem(opts.FilesToCopy)
 	return &Worker{
 		name:     name,
 		busy:     false,
+		ip:       ip,
 		initPath: opts.InitPath,
 		m:        sync.Mutex{},
 		tmpDir:   d,
@@ -66,8 +72,11 @@ func (r *Worker) Start(c context.Context) error {
 	r.cancel = cancel
 
 	cmd := exec.CommandContext(ctx, "/proc/self/exe", "container", r.tmpDir+"/fs")
-	cmd.Env = append(defaultEnv, []string{"FUNC_INIT=" + r.initPath, "HOSTNAME=" + r.hostname}...)
-
+	cmd.Env = append(defaultEnv, []string{
+		"FUNC_INIT=" + r.initPath,
+		"HOSTNAME=" + r.hostname,
+		"IP=" + r.ip.String(),
+	}...)
 	cmd.SysProcAttr = &unix.SysProcAttr{
 		Cloneflags: unix.CLONE_NEWUTS |
 			unix.CLONE_NEWPID |
@@ -108,6 +117,7 @@ func (r *Worker) Start(c context.Context) error {
 
 func (w *Worker) Stop() {
 	w.cancel()
+	defaultIPManager.Release(w.ip)
 }
 
 func prepareFilesystem(fs []Files) string {
@@ -117,14 +127,14 @@ func prepareFilesystem(fs []Files) string {
 	}
 	log.Print(d)
 
-	if err := execc("cp", "-r", "./fs", d); err != nil {
-		log.Fatal("cp: ", err)
-	}
-
 	for _, v := range fs {
-		if err := execc("cp", "-r", v.From, fmt.Sprintf("%s/fs%s", d, v.To)); err != nil {
+		if err := execc("cp", v.From, fmt.Sprintf("%s/fs%s", ".", v.To)); err != nil {
 			log.Fatal("cp wrapper: ", err)
 		}
+	}
+
+	if err := execc("cp", "-r", "./fs", d); err != nil {
+		log.Fatal("cp: ", err)
 	}
 
 	return d
@@ -154,7 +164,11 @@ func (r *Worker) Execute() {
 	defer r.setNotBusy()
 	log.Printf("[%s] exec: started", r.name)
 	defer log.Printf("[%s] exec: end", r.name)
-	time.Sleep(2 * time.Second)
+	log.Print()
+
+	b, _:=json.Marshal(map[string]string{"Url": "sta", "Body": "okok"})
+
+	log.Print(http.Post(fmt.Sprintf("http://%s:9999", r.ip.IP.String()), "application/json", bytes.NewBuffer(b)))
 	r.lastExec = time.Now()
 }
 

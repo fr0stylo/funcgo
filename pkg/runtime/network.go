@@ -3,7 +3,6 @@ package runtime
 import (
 	"fmt"
 	"log"
-	"math/rand"
 	"os"
 	"os/exec"
 	"strconv"
@@ -71,18 +70,20 @@ func setupIface(link netlink.Link, cfg Cfg) error {
 	if err != nil {
 		return fmt.Errorf("parse IP: %v", err)
 	}
+
+	log.Print("IP: ", cfg.IP)
+
 	return netlink.AddrAdd(link, addr)
 }
 
-const ipTmpl = "168.0.0.%d/24"
 
-func SetupNet() error {
+func SetupNet(ip string) error {
 	lnk, err := waitForIface()
 	if err != nil {
 		return err
 	}
 	if err := setupIface(lnk, Cfg{
-		IP: fmt.Sprintf(ipTmpl, rand.Intn(253)+2),
+		IP: ip,
 	}); err != nil {
 		return err
 	}

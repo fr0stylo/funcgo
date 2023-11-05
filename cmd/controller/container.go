@@ -18,20 +18,28 @@ func containerInit() {
 	if !ok {
 		log.Fatal("FUNC_INIT is not defined")
 	}
+	hostname, ok := os.LookupEnv("HOSTNAME")
+	if !ok {
+		log.Fatal("HOSTNAME is not defined")
+	}
+	ip, ok := os.LookupEnv("IP")
+	if !ok {
+		log.Fatal("HOSTNAME is not defined")
+	}
 	fmt.Fprintf(os.Stdout, "Container inside\n")
 	fmt.Fprintf(os.Stdout, "%s\n", os.Args[2])
 
-	must("hostname: ", syscall.Sethostname([]byte("inside-container")))
-	
+	must("hostname: ", syscall.Sethostname([]byte(hostname)))
+
 	cg()
-	
+
 	must("chdir: ", syscall.Chroot(os.Args[2]))
 	must("chdir: ", syscall.Chdir("/"))
 	must("proc: ", syscall.Mount("proc", "proc", "proc", 0, ""))
 	defer syscall.Unmount("/proc", 0)
 	// ctx, _ := context.WithTimeout(context.Background(), 500*time.Millisecond)
-	
-	must("Setup net: ", runtime.SetupNet())
+
+	must("Setup net: ", runtime.SetupNet(ip))
 
 	ctx := context.Background()
 

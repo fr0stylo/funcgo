@@ -20,13 +20,14 @@ func main() {
 	case "container":
 		containerInit()
 	default:
-		mngr := runtime.NewManager(&runtime.ManagerOpts{
+		mngr := runtime.NewFunction(&runtime.FunctionOpts{
 			// MaxConcurrency: 2,
 			MaxConcurrency: 10,
-			MainExec:       "/etc/wrapper.sh",
+			MainExec:       "/etc/function",
 			RootFS:         "./fs",
 			Files: runtime.FileList(
 				runtime.Files{From: "./wrapper.sh", To: "/etc/wrapper.sh"},
+				runtime.Files{From: "./bin/function", To: "/etc/fn"},
 			),
 		})
 

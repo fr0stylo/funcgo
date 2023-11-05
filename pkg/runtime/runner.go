@@ -2,7 +2,7 @@ package runtime
 
 import "log"
 
-type ManagerOpts struct {
+type FunctionOpts struct {
 	MaxConcurrency int
 	MainExec       string
 	Files          []Files
@@ -10,19 +10,19 @@ type ManagerOpts struct {
 	RootFS         string
 }
 
-type Manager struct {
+type Function struct {
 	pool           *WorkerPool
 	maxConcurrency int
 }
 
-func NewManager(opts *ManagerOpts) *Manager {
-	return &Manager{
+func NewFunction(opts *FunctionOpts) *Function {
+	return &Function{
 		pool:           NewWorkerPool(&WorkerPoolOpts{WorkerTemplate: &WorkerOpts{InitPath: opts.MainExec, FilesToCopy: opts.Files}}),
 		maxConcurrency: opts.MaxConcurrency,
 	}
 }
 
-func (r *Manager) Execute() {
+func (r *Function) Execute() {
 	var w Runnable
 	for w = r.pool.GetAvailable(); w == nil; w = r.pool.GetAvailable() {
 		if r.maxConcurrency > r.pool.Size() {
