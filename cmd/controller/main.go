@@ -27,7 +27,7 @@ func main() {
 			RootFS:         "./fs",
 			Files: runtime.FileList(
 				runtime.Files{From: "./wrapper.sh", To: "/etc/wrapper.sh"},
-				runtime.Files{From: "./bin/function", To: "/etc/fn"},
+				runtime.Files{From: "./bin/function", To: "/etc/function"},
 			),
 		})
 

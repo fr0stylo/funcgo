@@ -7,3 +7,6 @@ unet:
 
 build:
 	go build -o ./bin/ ./...
+
+fs: 
+	cp -r ${shell docker image inspect alpine:latest -f \ {{.GraphDriver.Data.UpperDir}}} ./fs
