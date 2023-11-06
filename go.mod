@@ -13,6 +13,7 @@ require (
 )
 
 require (
+	github.com/gorilla/mux v1.8.1
 	github.com/vishvananda/netns v0.0.0-20191106174202-0a2b9b5464df // indirect
 	go.uber.org/zap v1.26.0
 	golang.org/x/net v0.17.0

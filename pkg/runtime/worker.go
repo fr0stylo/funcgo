@@ -1,13 +1,10 @@
 package runtime
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net"
-	"net/http"
 	"os"
 	"os/exec"
 	"sync"
@@ -19,6 +16,7 @@ import (
 )
 
 type Worker struct {
+	api      *WorkerApi
 	name     string
 	busy     bool
 	m        sync.Mutex
@@ -49,6 +47,7 @@ func FileList(f ...Files) []Files {
 func NewWorker(name string, ip *netlink.Addr, opts *WorkerOpts) *Worker {
 	d := prepareFilesystem(opts.FilesToCopy)
 	return &Worker{
+		api:      NewWorkerApi(ip.IP.String()),
 		name:     name,
 		busy:     false,
 		ip:       ip,
@@ -130,14 +129,14 @@ func prepareFilesystem(fs []Files) string {
 	}
 	log.Print(d)
 
-	for _, v := range fs {
-		if err := execc("cp", v.From, fmt.Sprintf("%s/fs%s", ".", v.To)); err != nil {
-			log.Fatal("cp wrapper: ", err)
-		}
-	}
-
 	if err := execc("cp", "-r", "./fs", d); err != nil {
 		log.Fatal("cp: ", err)
+	}
+
+	for _, v := range fs {
+		if err := execc("cp", v.From, fmt.Sprintf("%s/fs%s", d, v.To)); err != nil {
+			log.Fatal("cp wrapper: ", err)
+		}
 	}
 
 	return d
@@ -162,17 +161,20 @@ func (r *Worker) setBusy() {
 	r.m.Lock()
 }
 
-func (r *Worker) Execute() {
+func (r *Worker) Execute(obj any) (any, error) {
 	r.setBusy()
 	defer r.setNotBusy()
 	log.Printf("[%s] exec: started", r.name)
 	defer log.Printf("[%s] exec: end", r.name)
 	log.Print()
 
-	b, _ := json.Marshal(map[string]string{"Url": "sta", "Body": "okok"})
-
-	log.Print(http.Post(fmt.Sprintf("http://%s:9999", r.ip.IP.String()), "application/json", bytes.NewBuffer(b)))
+	res, err := r.api.Execute(obj)
+	if err != nil {
+		return nil, err
+	}
 	r.lastExec = time.Now()
+
+	return res, nil
 }
 
 func (r *Worker) IsBusy() bool {
