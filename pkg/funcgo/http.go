@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
 )
 
 type Request struct {
@@ -31,7 +29,6 @@ type HandlerFunc[T Request] func(context.Context, *zap.SugaredLogger, *Request) 
 func Handler[T Request](h HandlerFunc[T]) {
 	zz, _ := zap.NewProduction()
 	z := zz.Sugar()
-	h2s := &http2.Server{}
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t := time.Now()
@@ -65,7 +62,7 @@ func Handler[T Request](h HandlerFunc[T]) {
 
 	server := &http.Server{
 		Addr:    "0.0.0.0:9999",
-		Handler: h2c.NewHandler(handler, h2s),
+		Handler: handler,
 	}
 
 	z.Info("Listening [0.0.0.0:9999]...\n")

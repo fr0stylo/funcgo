@@ -2,15 +2,10 @@ package runtime
 
 import (
 	"bytes"
-	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
-
-	"golang.org/x/net/http2"
 )
 
 type WorkerApi struct {
@@ -22,12 +17,12 @@ func NewWorkerApi(ip string) *WorkerApi {
 	return &WorkerApi{
 		ip: ip,
 		client: &http.Client{
-			Transport: &http2.Transport{
-				AllowHTTP: true,
-				DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
-					var d net.Dialer
-					return d.DialContext(ctx, network, addr)
-				},
+			Transport: &http.Transport{
+				// AllowHTTP: true,
+				// DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
+				// 	var d net.Dialer
+				// 	return d.DialContext(ctx, network, addr)
+				// },
 			},
 		},
 	}
