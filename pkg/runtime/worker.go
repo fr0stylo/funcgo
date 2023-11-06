@@ -161,7 +161,7 @@ func (r *Worker) setBusy() {
 	r.m.Lock()
 }
 
-func (r *Worker) Execute(obj any) (any, error) {
+func (r *Worker) Execute(obj any) ([]byte, error) {
 	r.setBusy()
 	defer r.setNotBusy()
 	log.Printf("[%s] exec: started", r.name)

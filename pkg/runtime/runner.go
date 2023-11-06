@@ -25,7 +25,7 @@ func NewFunction(opts *FunctionOpts) *Function {
 	}
 }
 
-func (r *Function) Execute(obj any) (any, error) {
+func (r *Function) Execute(obj any) ([]byte, error) {
 	var w Runnable
 	for w = r.pool.GetAvailable(); w == nil; w = r.pool.GetAvailable() {
 		if r.maxConcurrency > r.pool.Size() {

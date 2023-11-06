@@ -21,7 +21,7 @@ type WorkerPoolOpts struct {
 }
 
 type Runnable interface {
-	Execute(any) (any, error)
+	Execute(any) ([]byte, error)
 }
 
 func NewWorkerPool(opts *WorkerPoolOpts) *WorkerPool {

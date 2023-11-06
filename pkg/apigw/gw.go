@@ -28,11 +28,6 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	qparams := make(map[string][]string)
-	for n, v := range r.URL.Query() {
-		qparams[n] = v
-	}
-
 	req := funcgo.Request{
 		Params:      mux.Vars(r),
 		QueryParams: r.URL.Query(),
@@ -50,8 +45,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var fres funcgo.Response
-	j, _ := json.Marshal(res)
-	json.Unmarshal(j, &fres)
+	json.Unmarshal(res, &fres)
 
 	for n, h := range fres.Headers {
 		w.Header().Add(n, h)

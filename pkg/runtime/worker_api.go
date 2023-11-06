@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 
@@ -32,7 +33,7 @@ func NewWorkerApi(ip string) *WorkerApi {
 	}
 }
 
-func (r *WorkerApi) Execute(o any) (any, error) {
+func (r *WorkerApi) Execute(o any) ([]byte, error) {
 	b, _ := json.Marshal(o)
 
 	res, err := r.client.Post(fmt.Sprintf("http://%s:9999", r.ip), "application/json", bytes.NewBuffer(b))
@@ -42,10 +43,5 @@ func (r *WorkerApi) Execute(o any) (any, error) {
 
 	defer res.Body.Close()
 	// Kills other types as it becomes map[string]interface
-	var body any
-	if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
-		return nil, err
-	}
-
-	return body, nil
+	return io.ReadAll(res.Body)
 }

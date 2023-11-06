@@ -14,7 +14,7 @@ func main() {
 		log.Info(t.Body)
 		b, _ := json.Marshal(t)
 		return &funcgo.Response{
-			StatusCode: 206,
+			StatusCode: 201,
 			Body:       string(b),
 		}, nil
 	})

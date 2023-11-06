@@ -10,5 +10,7 @@ all:
 
 build: fs all unet
 
-fs: 
+fs:
+	sudo rm -rf ./fs
 	cp -r ${shell docker image inspect alpine:latest -f \ {{.GraphDriver.Data.UpperDir}}} ./fs
+	echo "168.0.0.1 host.funcgo.internal" >> ./fs/etc/resolv.conf
