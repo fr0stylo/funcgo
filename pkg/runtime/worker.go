@@ -3,7 +3,6 @@ package runtime
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"os/exec"
@@ -127,7 +126,7 @@ func prepareFilesystem(fs []Files) string {
 	if err != nil {
 		log.Fatal("tmpdir ", err)
 	}
-	log.Print(d)
+	log.Info(d)
 
 	if err := execc("cp", "-r", "./fs", d); err != nil {
 		log.Fatal("cp: ", err)
@@ -143,7 +142,7 @@ func prepareFilesystem(fs []Files) string {
 }
 
 func (r *Worker) SinceLastExecution() time.Duration {
-	log.Printf("[%s]: %s", r.name, time.Since(r.lastExec))
+	log.Infof("[%s]: %s", r.name, time.Since(r.lastExec))
 	return time.Since(r.lastExec)
 }
 
@@ -164,9 +163,8 @@ func (r *Worker) setBusy() {
 func (r *Worker) Execute(obj any) ([]byte, error) {
 	r.setBusy()
 	defer r.setNotBusy()
-	log.Printf("[%s] exec: started", r.name)
-	defer log.Printf("[%s] exec: end", r.name)
-	log.Print()
+	log.Infof("[%s] exec: started", r.name)
+	defer log.Infof("[%s] exec: end", r.name)
 
 	res, err := r.api.Execute(obj)
 	if err != nil {

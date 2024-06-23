@@ -15,7 +15,8 @@ import (
 )
 
 type Handler struct {
-	Runner runtime.Runnable
+	Runner       runtime.Runnable
+	FunctionName string
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -28,12 +29,15 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := funcgo.Request{
-		Params:      mux.Vars(r),
-		QueryParams: r.URL.Query(),
-		Path:        r.URL.Path,
-		Body:        string(b),
-		Method:      r.Method,
+	req := runtime.HostRequest{
+		FunctionName: h.FunctionName,
+		Request: funcgo.Request{
+			Params:      mux.Vars(r),
+			QueryParams: r.URL.Query(),
+			Path:        r.URL.Path,
+			Body:        string(b),
+			Method:      r.Method,
+		},
 	}
 
 	res, err := h.Runner.Execute(req)
@@ -50,6 +54,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for n, h := range fres.Headers {
 		w.Header().Add(n, h)
 	}
+	log.Printf("%s", res)
 
 	w.Header().Add("X-Upstream-Time", time.Since(start).String())
 	w.Header().Add("Content-Type", "application/json")

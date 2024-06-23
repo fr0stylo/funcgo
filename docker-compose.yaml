@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  nats:
+    image: nats
+  fiz:
+    image: funcgo
+    privileged: true
+    volumes:
+      - type: bind
+        source: ./bin/
+        target: /funcgo/bin/

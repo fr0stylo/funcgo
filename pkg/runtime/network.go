@@ -2,7 +2,6 @@ package runtime
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"strconv"
@@ -12,24 +11,24 @@ import (
 )
 
 func waitForIface() (netlink.Link, error) {
-	log.Printf("Starting to wait for network interface")
+	log.Info("Starting to wait for network interface")
 	start := time.Now()
 	for {
-		fmt.Printf(".")
+		log.Info(".")
 		if time.Since(start) > 5*time.Second {
-			fmt.Printf("\n")
+			log.Info("\n")
 			return nil, fmt.Errorf("failed to find veth interface in 5 seconds")
 		}
 		// get list of all interfaces
 		lst, err := netlink.LinkList()
 		if err != nil {
-			fmt.Printf("\n")
+			log.Info("\n")
 			return nil, err
 		}
 		for _, l := range lst {
 			// if we found "veth" interface - it's time to continue setup
 			if l.Type() == "veth" {
-				fmt.Printf("\n")
+				log.Info("\n")
 				return l, nil
 			}
 		}
@@ -40,7 +39,7 @@ func waitForIface() (netlink.Link, error) {
 const suidNet = "unet"
 
 func putIface(pid int) error {
-	log.Printf("Putting veth interface into container")
+	log.Info("Putting veth interface into container")
 
 	cmd := exec.Command(suidNet, strconv.Itoa(pid))
 	cmd.Stdout = os.Stdout
@@ -70,12 +69,20 @@ func setupIface(link netlink.Link, cfg Cfg) error {
 	if err != nil {
 		return fmt.Errorf("parse IP: %v", err)
 	}
+	log.Infof("IP:  %s", cfg.IP)
+	x, _ := netlink.LinkList()
+	log.Infof("%+v", x)
+	log.Info(netlink.RouteList(link, netlink.FAMILY_V4))
 
-	log.Print("IP: ", cfg.IP)
-
+	g, _ := netlink.ParseIPNet("0.0.0.0/0")
+	netlink.RouteAdd(&netlink.Route{
+		LinkIndex: link.Attrs().Index,
+		Dst:       g,
+		Scope:     netlink.SCOPE_UNIVERSE,
+		Gw:        defaultIPManager.Gateway().IP,
+	})
 	return netlink.AddrAdd(link, addr)
 }
-
 
 func SetupNet(ip string) error {
 	lnk, err := waitForIface()

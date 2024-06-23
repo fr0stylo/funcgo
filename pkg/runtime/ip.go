@@ -2,7 +2,6 @@ package runtime
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"sync"
@@ -10,13 +9,13 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
-type ipmanager struct {
+type Ipmanager struct {
 	lock     sync.RWMutex
 	template string
 	iptable  []bool
 }
 
-func (r *ipmanager) acquire(i int) *netlink.Addr {
+func (r *Ipmanager) acquire(i int) *netlink.Addr {
 	r.lock.RLock()
 	defer r.lock.RUnlock()
 	r.iptable[i] = true
@@ -24,7 +23,7 @@ func (r *ipmanager) acquire(i int) *netlink.Addr {
 	return ip
 }
 
-func (r *ipmanager) Acquire() *netlink.Addr {
+func (r *Ipmanager) Acquire() *netlink.Addr {
 	for {
 		for i, v := range r.iptable {
 			if !v {
@@ -34,7 +33,7 @@ func (r *ipmanager) Acquire() *netlink.Addr {
 	}
 }
 
-func (r *ipmanager) Release(ip *netlink.Addr) error {
+func (r *Ipmanager) Release(ip *netlink.Addr) error {
 	r.lock.RLock()
 	defer r.lock.RUnlock()
 	if ip == nil {
@@ -54,12 +53,12 @@ func (r *ipmanager) Release(ip *netlink.Addr) error {
 	return nil
 }
 
-func (r *ipmanager) Base() *netlink.Addr {
+func (r *Ipmanager) Base() *netlink.Addr {
 	ip, _ := netlink.ParseAddr(fmt.Sprintf(r.template, 1))
 	return ip
 }
 
-func (r *ipmanager) Gateway() *netlink.Addr {
+func (r *Ipmanager) Gateway() *netlink.Addr {
 	ip, _ := netlink.ParseAddr(fmt.Sprintf(r.template, 1))
 	return ip
 }
@@ -71,8 +70,8 @@ type IPManager interface {
 	Gateway() *netlink.Addr
 }
 
-func NewIPManager(template string) IPManager {
-	mngr := &ipmanager{
+func NewIPManager(template string) *Ipmanager {
+	mngr := &Ipmanager{
 		lock:     sync.RWMutex{},
 		template: template,
 		iptable:  make([]bool, 256),

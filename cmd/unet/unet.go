@@ -28,10 +28,12 @@ func createBridge() error {
 	if !strings.Contains(err.Error(), "no such network interface") {
 		return err
 	}
-	// create *netlink.Bridge object
 	la := netlink.NewLinkAttrs()
 	la.Name = bridgeName
-	br := &netlink.Bridge{LinkAttrs: la}
+	la.TxQLen = -1
+	br := &netlink.Bridge{
+		LinkAttrs: la,
+	}
 	if err := netlink.LinkAdd(br); err != nil {
 		return fmt.Errorf("bridge creation: %v", err)
 	}
