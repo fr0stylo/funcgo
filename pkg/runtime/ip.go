@@ -84,4 +84,4 @@ func NewIPManager(template string) *Ipmanager {
 	return mngr
 }
 
-var defaultIPManager = NewIPManager("168.0.0.%d/24")
+var DefaultIpManager = NewIPManager("10.10.10.%d/24")

@@ -29,6 +29,7 @@ func containerInit() {
 	fmt.Fprintf(os.Stdout, "%s\n", os.Args[2])
 
 	must("hostname: ", syscall.Sethostname([]byte(hostname)))
+	must("Setup net: ", runtime.SetupNet(ip))
 
 	cg()
 
@@ -37,8 +38,7 @@ func containerInit() {
 	must("proc: ", syscall.Mount("proc", "proc", "proc", 0, ""))
 	defer syscall.Unmount("/proc", 0)
 	// ctx, _ := context.WithTimeout(context.Background(), 500*time.Millisecond)
-
-	must("Setup net: ", runtime.SetupNet(ip))
+	os.WriteFile("/etc/resolv.conf", []byte("nameserver 8.8.8.8"), 0666)
 
 	ctx := context.Background()
 

@@ -28,7 +28,7 @@ func waitForIface() (netlink.Link, error) {
 		for _, l := range lst {
 			// if we found "veth" interface - it's time to continue setup
 			if l.Type() == "veth" {
-				log.Info("\n")
+				log.Info(l.Attrs().Name)
 				return l, nil
 			}
 		}
@@ -40,11 +40,24 @@ const suidNet = "unet"
 
 func putIface(pid int) error {
 	log.Info("Putting veth interface into container")
-
-	cmd := exec.Command(suidNet, strconv.Itoa(pid))
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	must("putIface", cmd.Run())
+	//
+	//cmd := exec.Command(suidNet, strconv.Itoa(pid))
+	//cmd.Stdout = os.Stdout
+	//cmd.Stderr = os.Stderr
+	//must("putIface", cmd.Run())
+	//-bridgeAddress string
+	//Address to assign to bridge device (CIDR notation) (default "10.10.10.1/24")
+	//-bridgeName string
+	//Name to assign to bridge device (default "brg0")
+	//-containerAddress string
+	//Address to assign to the container (CIDR notation) (default "10.10.10.2/24")
+	//-pid int
+	//pid of a process in the container's network namespace
+	netsetgoCmd := exec.Command("netsetgo", "-pid", strconv.Itoa(pid))
+	if err := netsetgoCmd.Run(); err != nil {
+		fmt.Printf("Error running netsetgo - %s\n", err)
+		os.Exit(1)
+	}
 
 	return nil
 }
@@ -70,30 +83,21 @@ func setupIface(link netlink.Link, cfg Cfg) error {
 		return fmt.Errorf("parse IP: %v", err)
 	}
 	log.Infof("IP:  %s", cfg.IP)
-	x, _ := netlink.LinkList()
-	log.Infof("%+v", x)
 	log.Info(netlink.RouteList(link, netlink.FAMILY_V4))
 
-	g, _ := netlink.ParseIPNet("0.0.0.0/0")
-	netlink.RouteAdd(&netlink.Route{
-		LinkIndex: link.Attrs().Index,
-		Dst:       g,
-		Scope:     netlink.SCOPE_UNIVERSE,
-		Gw:        defaultIPManager.Gateway().IP,
-	})
 	return netlink.AddrAdd(link, addr)
 }
 
 func SetupNet(ip string) error {
-	lnk, err := waitForIface()
+	_, err := waitForIface()
 	if err != nil {
 		return err
 	}
-	if err := setupIface(lnk, Cfg{
-		IP: ip,
-	}); err != nil {
-		return err
-	}
+	//if err := setupIface(lnk, Cfg{
+	//	IP: ip,
+	//}); err != nil {
+	//	return err
+	//}
 
 	return nil
 }

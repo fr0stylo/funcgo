@@ -95,7 +95,7 @@ func (r *WorkerPool) Push() *Worker {
 	name := fmt.Sprintf("%s-%s", utils.RandomString(8), utils.RandomString(8))
 	log.Infof("[pool]: Started %s worker, current count: %v", name, len(r.workers))
 
-	w := NewWorker(name, defaultIPManager.Acquire(), r.template)
+	w := NewWorker(name, DefaultIpManager.Acquire(), r.template)
 	go w.Start(context.Background())
 
 	r.m.Lock()

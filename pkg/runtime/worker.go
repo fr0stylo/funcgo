@@ -77,11 +77,12 @@ func (r *Worker) Start(c context.Context) error {
 		"IP=" + r.ip.String(),
 	}...)
 	cmd.SysProcAttr = &unix.SysProcAttr{
-		Cloneflags: unix.CLONE_NEWUTS |
-			unix.CLONE_NEWPID |
-			unix.CLONE_NEWNET |
-			unix.CLONE_NEWUSER |
-			unix.CLONE_NEWNS,
+		Cloneflags: syscall.CLONE_NEWNS |
+			syscall.CLONE_NEWUTS |
+			syscall.CLONE_NEWIPC |
+			syscall.CLONE_NEWPID |
+			syscall.CLONE_NEWNET |
+			syscall.CLONE_NEWUSER,
 		Unshareflags: unix.CLONE_NEWNS,
 		UidMappings: []syscall.SysProcIDMap{
 			{
@@ -106,7 +107,10 @@ func (r *Worker) Start(c context.Context) error {
 		return err
 	}
 
-	putIface(cmd.Process.Pid)
+	err := putIface(cmd.Process.Pid)
+	if err != nil {
+		return err
+	}
 
 	go cmd.Wait()
 
@@ -116,9 +120,9 @@ func (r *Worker) Start(c context.Context) error {
 	return nil
 }
 
-func (w *Worker) Stop() {
-	w.cancel()
-	defaultIPManager.Release(w.ip)
+func (r *Worker) Stop() {
+	r.cancel()
+	DefaultIpManager.Release(r.ip)
 }
 
 func prepareFilesystem(fs []Files) string {

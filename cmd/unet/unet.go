@@ -11,12 +11,17 @@ import (
 	"strings"
 
 	"github.com/vishvananda/netlink"
+
+	"github.com/fr0stylo/funcgo/pkg/runtime"
 )
 
 const (
 	bridgeName = "unc0"
 	vethPrefix = "uv"
-	ipAddr     = "168.0.0.1/24"
+)
+
+var (
+	gateway = runtime.DefaultIpManager.Gateway()
 )
 
 func createBridge() error {
@@ -38,12 +43,8 @@ func createBridge() error {
 		return fmt.Errorf("bridge creation: %v", err)
 	}
 	// set up ip addres for bridge
-	addr, err := netlink.ParseAddr(ipAddr)
-	if err != nil {
-		return fmt.Errorf("parse address %s: %v", ipAddr, err)
-	}
-	if err := netlink.AddrAdd(br, addr); err != nil {
-		return fmt.Errorf("add address %v to bridge: %v", addr, err)
+	if err := netlink.AddrAdd(br, gateway); err != nil {
+		return fmt.Errorf("add address %v to bridge: %v", gateway, err)
 	}
 	// sets up bridge ( ip link set dev unc0 up )
 	if err := netlink.LinkSetUp(br); err != nil {
@@ -75,14 +76,25 @@ func createVethPair(pid int) error {
 	if err != nil {
 		return fmt.Errorf("get peer interface: %v", err)
 	}
+
 	// put peer side to network namespace of specified PID
 	if err := netlink.LinkSetNsPid(peer, pid); err != nil {
 		return fmt.Errorf("move peer to ns of %d: %v", pid, err)
 	}
+	pp, _ := netlink.LinkByName(parentName)
+
+	netlink.LinkSetMaster(pp, br)
+	if err := netlink.LinkSetUp(pp); err != nil {
+		return err
+	}
 	if err := netlink.LinkSetUp(vp); err != nil {
 		return err
 	}
-	return nil
+	return netlink.RouteAdd(&netlink.Route{
+		LinkIndex: peer.Attrs().Index,
+		Scope:     netlink.SCOPE_UNIVERSE,
+		Gw:        gateway.IP,
+	})
 }
 
 func main() {
